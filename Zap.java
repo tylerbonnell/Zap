@@ -13,6 +13,7 @@ public class Zap {
 			DataInputStream in = new DataInputStream(new FileInputStream(inputFile));
 			DataOutputStream out = new DataOutputStream(new FileOutputStream(fileName + ".zap"));
 			writeHeader(out, args[0], fileSize);
+			writeBody(in, out, fileSize);
 
 		} catch (FileNotFoundException e) {
 			System.err.print("File does not exist!");
@@ -38,8 +39,16 @@ public class Zap {
 
 	public static void writeHeader(DataOutputStream out, String fileName, long fileSize) throws IOException {
 		out.writeLong(fileSize);
-		out.write(fileName.length());
+		System.out.println(fileSize);
+		out.writeInt(fileName.length());
+		System.out.println(fileName.length());
 		out.writeChars(fileName);
+	}
+
+	public static void writeBody(DataInputStream in, DataOutputStream out, long fileSize) throws IOException {
+		for (int i = 0; i < fileSize; i++) {
+			out.writeByte(in.readByte());
+		}
 	}
 }
 

@@ -1,6 +1,7 @@
 import java.io.*;
 
 public class Unzap {
+
 	public static void main(String[] args) throws FileNotFoundException {
 		DataInputStream in = new DataInputStream(new FileInputStream(args[0]));
 		try {

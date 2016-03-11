@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Scanner;
 
 public class Zap {
 	private static final String dickbutt =
@@ -57,19 +58,42 @@ public class Zap {
 			"                                                                                        \n";
 
 	public static void main(String[] args) {
-		int multi = checkArgs(args);
-
 		try {
-
-			String fileName = args[0].substring(0, args[0].indexOf("."));
-			String fileExt = args[0].substring(args[0].indexOf("."));
-			File inputFile = new File(args[0]);
-			long fileSize = inputFile.length();
-			DataInputStream in = new DataInputStream(new FileInputStream(inputFile));
-			DataOutputStream out = new DataOutputStream(new FileOutputStream(fileName + ".zap"));
-			writeHeader(out, args[0], fileSize);
-			writeBody(in, out, fileSize, multi);
-
+			if (args.length == 0) {
+				Scanner console = new Scanner(System.in);
+				System.out.print("Would you like to Zap or Unzap? ");
+				String which = console.nextLine();
+				while (!which.equalsIgnoreCase("zap") && !which.equalsIgnoreCase("unzap")) {
+					System.out.print("Please enter \"Zap\" or \"Unzap\": ");
+					which = console.nextLine();
+				}
+				if (which.equalsIgnoreCase("zap")) {
+					args = new String[2];
+					System.out.print("What is the name of the file you would like to Zap? ");
+					args[0] = console.nextLine();
+					System.out.print("How many times should the file size be multiplied? ");
+					args[1] = console.nextLine();
+				} else {
+					args[0] = "-u";
+					System.out.print("What is the name of the file you would like to Unzap? ");
+					args[1] = console.nextLine();
+				}
+			} else {
+				checkArgs(args);
+			}
+			if (args[0].equals("-u")) {	//unzap
+				DataInputStream in = new DataInputStream(new FileInputStream(args[1]));
+				unzap(in);
+			} else {	// zap
+				String fileName = args[0].substring(0, args[0].indexOf("."));
+				File inputFile = new File(args[0]);
+				long fileSize = inputFile.length();
+				DataInputStream in = new DataInputStream(new FileInputStream(inputFile));
+				DataOutputStream out = new DataOutputStream(new FileOutputStream(fileName + ".zap"));
+				writeHeader(out, args[0], fileSize);
+				int multi = parseMultiplier(args);
+				writeBody(in, out, fileSize, multi);
+			}
 		} catch (FileNotFoundException e) {
 			System.err.print("File does not exist!");
 			System.exit(0);
@@ -79,11 +103,15 @@ public class Zap {
 		}
 	}
 
-	public static int checkArgs(String[] args) {
+	public static void checkArgs(String[] args) {
 		if (args.length != 2) {
 			System.err.print("Correct Usage: java Zap filename.extension size-multiplier");
 			System.exit(0);
 		}
+	}
+
+	public static int parseMultiplier(String[] args) {
+		if (args.length < 2) return 0;
 		try {
 			int multi = Integer.parseInt(args[1]);
 			return multi;
@@ -94,11 +122,15 @@ public class Zap {
 		return 0;
 	}
 
+	/*
+	Stores a block of information at the beginning of the .zap file:
+		amount of bytes in the file (long)
+		length of file name (int)
+		file name characters (chars, duh)
+	 */
 	public static void writeHeader(DataOutputStream out, String fileName, long fileSize) throws IOException {
 		out.writeLong(fileSize);
-		System.out.println(fileSize);
 		out.writeInt(fileName.length());
-		System.out.println(fileName.length());
 		out.writeChars(fileName);
 	}
 
@@ -116,13 +148,18 @@ public class Zap {
 			index++;
 		}
 	}
+
+	public static void unzap(DataInputStream zapped) throws IOException {
+		long fileSize = zapped.readLong();
+		int nameLength = zapped.readInt();
+		String str = "";
+		for (int i = 0; i < nameLength; i++) {
+			str += zapped.readChar();
+		}
+
+		DataOutputStream out = new DataOutputStream(new FileOutputStream(str));
+		for (int i = 0; i < fileSize; i++) {
+			out.writeByte(zapped.readByte());
+		}
+	}
 }
-
-
-/*
-	Store:
-		amount of bytes in the file (long)
-		length of file name (int)
-		file name characters (chars, duh)
-		actual file
- */

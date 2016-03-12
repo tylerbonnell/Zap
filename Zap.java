@@ -60,24 +60,7 @@ public class Zap {
 	public static void main(String[] args) {
 		try {
 			if (args.length == 0) {
-				Scanner console = new Scanner(System.in);
-				System.out.print("Would you like to Zap or Unzap? ");
-				String which = console.nextLine();
-				while (!which.equalsIgnoreCase("zap") && !which.equalsIgnoreCase("unzap")) {
-					System.out.print("Please enter \"Zap\" or \"Unzap\": ");
-					which = console.nextLine();
-				}
-				if (which.equalsIgnoreCase("zap")) {
-					args = new String[2];
-					System.out.print("What is the name of the file you would like to Zap? ");
-					args[0] = console.nextLine();
-					System.out.print("How many times should the file size be multiplied? ");
-					args[1] = console.nextLine();
-				} else {
-					args[0] = "-u";
-					System.out.print("What is the name of the file you would like to Unzap? ");
-					args[1] = console.nextLine();
-				}
+				args = getArgsFromConsole();
 			} else {
 				checkArgs(args);
 			}
@@ -103,9 +86,34 @@ public class Zap {
 		}
 	}
 
+	// If the user opts to use console input instead of command line args,
+	// this gets the args from the console
+	public static String[] getArgsFromConsole() {
+		Scanner console = new Scanner(System.in);
+		String[] args = new String[2];
+		System.out.print("Would you like to Zap or Unzap? ");
+		String which = console.nextLine();
+		while (!which.equalsIgnoreCase("zap") && !which.equalsIgnoreCase("unzap")) {
+			System.out.print("Please enter \"Zap\" or \"Unzap\": ");
+			which = console.nextLine();
+		}
+		if (which.equalsIgnoreCase("zap")) {
+			System.out.print("What is the name of the file you would like to Zap? ");
+			args[0] = console.nextLine();
+			System.out.print("How many times should the file size be multiplied? ");
+			args[1] = console.nextLine();
+		} else {
+			args[0] = "-u";
+			System.out.print("What is the name of the file you would like to Unzap? ");
+			args[1] = console.nextLine();
+		}
+		return args;
+	}
+
+	// Verifies the correct number of args
 	public static void checkArgs(String[] args) {
 		if (args.length != 2) {
-			System.err.print("Correct Usage: java Zap filename.extension size-multiplier");
+			System.err.print("You should pass 0 or 2 command line arguments.");
 			System.exit(0);
 		}
 	}
@@ -116,7 +124,7 @@ public class Zap {
 			int multi = Integer.parseInt(args[1]);
 			return multi;
 		} catch (NumberFormatException e) {
-			System.err.print("Second argument should be an integer");
+			System.err.print("Second argument should be an integer.");
 			System.exit(0);
 		}
 		return 0;
@@ -134,11 +142,12 @@ public class Zap {
 		out.writeChars(fileName);
 	}
 
+	// Copies the file and pads the end of the file with extra bytes to make it bigger
 	public static void writeBody(DataInputStream in, DataOutputStream out, long fileSize, int multiplier) throws IOException {
 		for (int i = 0; i < fileSize; i++) {
 			out.writeByte(in.readByte());
 		}
-		long charsToWrite = fileSize * (multiplier - 1);
+		long charsToWrite = (fileSize * (multiplier - 1)) / 2; // java chars are 2 bytes
 		long count = 0;
 		int index = 0;
 		while (count < charsToWrite) {
@@ -149,6 +158,7 @@ public class Zap {
 		}
 	}
 
+	// Extracts the original file from a zapped file
 	public static void unzap(DataInputStream zapped) throws IOException {
 		long fileSize = zapped.readLong();
 		int nameLength = zapped.readInt();
